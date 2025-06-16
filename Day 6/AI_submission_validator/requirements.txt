@@ -1,8 +1,13 @@
 streamlit
-pytesseract
-pyzbar
+langchain
+google-generativeai
 faiss-cpu
 sentence-transformers
-google-generativeai
 Pillow
-pymongo
+python-docx
+PyPDF2           # For PDF text extraction (alternative to pdfplumber)
+PyMuPDF          # Faster PDF extraction with images
+easyocr          # For QR/image text extraction
+numpy
+python-dotenv    # For environment variables
+docx2txt         # For extracting raw DOCX text

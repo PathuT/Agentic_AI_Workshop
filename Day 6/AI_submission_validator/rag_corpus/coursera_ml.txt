@@ -1,0 +1,7 @@
+Certificate of Completion
+
+This is to certify that John Doe has successfully completed the course:
+Machine Learning by Stanford University on Coursera
+
+Issued: Jan 2024
+Instructor: Andrew Ng

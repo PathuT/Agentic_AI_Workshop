@@ -1,15 +1,11 @@
-# app/ai/gemini_api.py
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
 
-def gemini_score_submission(trusted_doc: str, submitted_doc: str) -> str:
-    """
-    Dummy Gemini scoring simulation.
-    For demo, it returns a mock score based on simple checks.
-    """
+load_dotenv()
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-    # Very simple logic: 
-    if submitted_doc.strip() == trusted_doc.strip() and trusted_doc != "":
-        return "Identical content detected — Score: 0.1"
-    elif len(submitted_doc) > 100:
-        return "Unique content detected — Score: 0.9"
-    else:
-        return "Paraphrased content detected — Score: 0.5"
+def run_gemini_prompt(prompt, content=""):
+    model = genai.GenerativeModel("models/gemini-1.5-flash")
+    response = model.generate_content(f"{prompt}\n\n{content}")
+    return response.text

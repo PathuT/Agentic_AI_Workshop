@@ -1,14 +1,6 @@
-# def build_validation_prompt(text: str) -> str:
-#     return f"""
-# You are an AI academic verifier.
-
-# A student submitted this certificate/project content:
-# ---
-# {text}
-# ---
-
-# Check if this matches a valid certificate/project from Coursera, Udemy, or any university program.
-# Respond like this:
-# Verdict: VALID or INVALID
-# Reason: <short reason>
-# """
+doc_validation_prompt = """You are an AI academic evaluator. Review the following submission and assess:
+1. Authenticity
+2. Relevance
+3. Coherence
+Return an analysis and a score from 0-100 with justification.
+Input: {input}"""

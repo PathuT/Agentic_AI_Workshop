@@ -1,28 +1,26 @@
-import numpy as np
-import faiss
 from sentence_transformers import SentenceTransformer
+import faiss
 import os
-from typing import List, Tuple
 
-embedder = SentenceTransformer('all-MiniLM-L6-v2')
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
-def load_documents_from_folder(folder_path: str) -> List[str]:
+def load_corpus(folder):
     docs = []
-    for fname in os.listdir(folder_path):
-        with open(os.path.join(folder_path, fname), 'r', encoding='utf-8') as f:
-            docs.append(f.read())
-    return docs
+    paths = []
+    for file in os.listdir(folder):
+        with open(os.path.join(folder, file), "r", encoding="utf-8") as f:
+            text = f.read()
+            docs.append(text)
+            paths.append(file)
+    return docs, paths
 
-def build_faiss_index(documents: List[str]) -> Tuple[faiss.IndexFlatIP, List[List[float]], List[str]]:
-    embeddings = embedder.encode(documents, convert_to_tensor=False)
-    dimension = len(embeddings[0])
-    index = faiss.IndexFlatIP(dimension)
-    index.add(np.array(embeddings).astype('float32'))
-    return index, embeddings, documents
+def build_faiss_index(docs):
+    embeddings = model.encode(docs)
+    index = faiss.IndexFlatL2(len(embeddings[0]))
+    index.add(embeddings)
+    return index, embeddings
 
-def retrieve_similar(query: str, index, embeddings, docs) -> Tuple[str, float]:
-    query_emb = embedder.encode([query], convert_to_tensor=False)
-    D, I = index.search(np.array(query_emb).astype('float32'), k=1)
-    best_doc = docs[I[0][0]]
-    similarity = D[0][0]
-    return best_doc, similarity
+def query_faiss(index, docs, query):
+    q_vec = model.encode([query])
+    D, I = index.search(q_vec, k=1)
+    return docs[I[0][0]], D[0][0]

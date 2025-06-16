@@ -1,47 +1,35 @@
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.text_splitter import CharacterTextSplitter
-import numpy as np
+from app.ai.gemini_api import run_gemini_prompt
+from app.utils.doc_utils import extract_qr_code
+from app.utils.retriever import load_corpus, build_faiss_index, query_faiss
+from app.utils.score_utils import compute_authenticity_score
+from app.ai.prompts import doc_validation_prompt
 
-embeddings = OpenAIEmbeddings()
+def process_submission(file_text, image_path):
+    # Extract QR (fallback if pyzbar removed)
+    qr_result = extract_qr_code(image_path)
 
-def cosine_similarity(vec1, vec2):
-    return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+    # Run Gemini to get AI feedback score
+    ai_response = run_gemini_prompt(doc_validation_prompt.format(input=file_text))
+    score_line = [line for line in ai_response.split('\n') if 'score' in line.lower()]
 
-def langchain_score_submission(trusted_doc: str, submitted_doc: str) -> str:
-    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-    trusted_chunks = text_splitter.split_text(trusted_doc)
-    submitted_chunks = text_splitter.split_text(submitted_doc)
+    # Safely extract integer score
+    try:
+        ai_score = int(''.join(filter(str.isdigit, score_line[0]))) if score_line else 50
+    except ValueError:
+        ai_score = 50  # fallback if no digits in line
 
-    trusted_embeds = [embeddings.embed_query(chunk) for chunk in trusted_chunks]
-    submitted_embeds = [embeddings.embed_query(chunk) for chunk in submitted_chunks]
+    # Run RAG similarity
+    docs, _ = load_corpus("rag_corpus")
+    index, _ = build_faiss_index(docs)
+    match_text, distance = query_faiss(index, docs, file_text)
 
-    trusted_vec = np.mean(trusted_embeds, axis=0)
-    submitted_vec = np.mean(submitted_embeds, axis=0)
-
-    similarity = cosine_similarity(trusted_vec, submitted_vec)
-    score_pct = similarity * 100
-
-    if score_pct > 90:
-        return f"{score_pct:.2f} (identical or very similar content)"
-    elif score_pct > 70:
-        return f"{score_pct:.2f} (paraphrased or moderately similar)"
-    else:
-        return f"{score_pct:.2f} (low similarity or unique content)"
-
-def process_submission_with_storage(trusted_doc, submitted_doc, qr_found=False):
-    analysis_result = langchain_score_submission(trusted_doc, submitted_doc)
-    flags = []
-
-    if "identical" in analysis_result.lower():
-        flags.append("Content appears identical to trusted document")
-    elif "paraphrased" in analysis_result.lower():
-        flags.append("Paraphrased content detected")
-    else:
-        flags.append("Unique or low similarity content detected")
+    # Compute authenticity
+    final_score = compute_authenticity_score(ai_score, distance, qr_result)
 
     return {
-        "authenticity_score": analysis_result,
-        "flags": flags,
-        "matched_reference": trusted_doc[:500],  # first 500 chars
-        "qr_found": qr_found
+        "ai_score": ai_score,
+        "qr_status": qr_result,
+        "rag_distance": distance,
+        "authenticity_score": final_score,
+        "match_found": match_text[:300]  # preview match text
     }
