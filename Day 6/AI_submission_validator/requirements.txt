@@ -1,0 +1,8 @@
+streamlit
+pytesseract
+pyzbar
+faiss-cpu
+sentence-transformers
+google-generativeai
+Pillow
+pymongo
