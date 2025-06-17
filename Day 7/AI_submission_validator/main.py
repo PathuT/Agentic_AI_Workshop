@@ -30,7 +30,7 @@ if st.button("✅ Validate"):
         if result['plagiarism']:
             st.error("🚫 Duplicate submission detected. Please submit original work.")
         else:
-            st.success("✅ Submission validated and stored for future comparison.")
+            st.success(" Submission validated and stored for future comparison.")
             st.write("### 🛠️ Submission Metadata:", result['parsed'])
             st.write("### 🔍 Plagiarism Detected:", result['plagiarism'])
             if result['credential']:

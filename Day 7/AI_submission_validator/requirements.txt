@@ -1,9 +1,9 @@
 streamlit
-pymupdf
-pillow
-langchain
-faiss-cpu
-sentence-transformers
-google-generativeai
-pytesseract
-pyzbar
+pymupdf                 # for PDF parsing
+pillow                  # for image handling (PIL)
+pytesseract             # for OCR
+opencv-python           # for QR code scanning (replaces pyzbar)
+langchain               # for agentic workflows and tools
+faiss-cpu               # for local vector store (RAG)
+sentence-transformers   # for embedding generation
+google-generativeai     # Gemini integration

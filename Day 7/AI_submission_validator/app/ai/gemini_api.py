@@ -4,7 +4,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-MODEL = "models/gemini-2.0-flash"
+
+# Initialize the model properly
+model = genai.GenerativeModel(model_name="models/gemini-2.0-flash")
 
 def query_gemini(context: str, submission: str) -> str:
     prompt = f"""
@@ -22,5 +24,8 @@ Provide:
 - explanation
 Return as JSON.
 """
-    resp = genai.generate_content(MODEL, prompt=prompt)
-    return resp.text.strip()
+    try:
+        response = model.generate_content(prompt)
+        return response.text.strip() if response else "No response"
+    except Exception as e:
+        return f"Gemini API Error: {str(e)}"
