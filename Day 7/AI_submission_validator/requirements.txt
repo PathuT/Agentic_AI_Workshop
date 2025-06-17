@@ -1,9 +1,20 @@
+# UI and Framework
 streamlit
-pymupdf                 # for PDF parsing
-pillow                  # for image handling (PIL)
-pytesseract             # for OCR
-opencv-python           # for QR code scanning (replaces pyzbar)
-langchain               # for agentic workflows and tools
-faiss-cpu               # for local vector store (RAG)
-sentence-transformers   # for embedding generation
-google-generativeai     # Gemini integration
+
+# PDF & Image Processing
+pymupdf                  # for PDF parsing
+pillow                   # for image handling (PIL)
+pytesseract              # for OCR
+opencv-python-headless   # for QR code scanning
+
+# LangChain and RAG
+langchain                # agentic workflows and tools
+faiss-cpu                # local vector store (for RAG)
+sentence-transformers    # for generating embeddings
+
+# Generative AI & Web Search
+google-generativeai      # Gemini API integration
+tavily-python            # Tavily Web search tool
+
+# Environment Variables
+python-dotenv            # for loading .env files
