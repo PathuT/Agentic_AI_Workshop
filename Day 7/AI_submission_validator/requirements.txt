@@ -1,0 +1,9 @@
+streamlit
+pymupdf
+pillow
+langchain
+faiss-cpu
+sentence-transformers
+google-generativeai
+pytesseract
+pyzbar
