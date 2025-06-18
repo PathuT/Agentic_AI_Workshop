@@ -50,5 +50,5 @@ if st.button("✅ Validate Submission"):
                 st.write("🔹 Matched Snippet:")
                 st.code(cred['matched'])
                 st.write(f"🔹 Score Label: `{cred['label']}`")
-                st.write("🔹 Gemini Output:")
+                st.write("🔹 Output:")
                 st.code(cred['gemini'])
