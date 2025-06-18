@@ -11,6 +11,7 @@ opencv-python-headless   # for QR code scanning
 langchain                # agentic workflows and tools
 faiss-cpu                # local vector store (for RAG)
 sentence-transformers    # for generating embeddings
+langchain-community
 
 # Generative AI & Web Search
 google-generativeai      # Gemini API integration
