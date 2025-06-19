@@ -5,7 +5,7 @@ A LangChain + RAG powered agentic AI app to **validate student submissions** by 
 - :camera: QR code or certificate presence (OCR-based fallback)
 - :books: Alignment with a trusted RAG corpus
 - :brain: Authenticity scoring via multi-agent architecture
-- :core: All the 4 agents are functional and made using agent initiate
+- :mag: All the 4 agents are functional and made using agent initiate
 ---
 ## :file_folder: Project Structure
 ```
