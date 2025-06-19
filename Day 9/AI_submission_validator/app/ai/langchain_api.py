@@ -2,6 +2,8 @@ from app.utils.doc_utils import extract_text_from_image, scan_qr_from_image
 from app.utils.score_utils import interpret_score
 from app.utils.retriever import load_corpus, build_faiss, retrieve
 from app.ai.gemini_api import query_gemini
+from langchain.agents import initialize_agent, Tool
+from langchain_google_genai import ChatGoogleGenerativeAI
 import os
 import shutil
 
@@ -24,7 +26,7 @@ def detect_plagiarism(subm_text: str, corpus_texts: list[str]):
 
 # 3. Credential Validation Agent (RAG + Gemini)
 def validate_credential(subm_text: str, reference_file):
-    # dynamic: save reference and rebuild
+    # Save reference and rebuild index
     dest = os.path.join(RAG_FOLDER, os.path.basename(reference_file.name))
     reference_file.seek(0)
     with open(dest, "wb") as w:
@@ -37,4 +39,57 @@ def validate_credential(subm_text: str, reference_file):
     label = interpret_score(score)
     gemini_resp = query_gemini(top, subm_text)
 
-    return {"matched": top[:500], "similarity": score, "label": label, "gemini": gemini_resp}
+    return {
+        "matched": top[:500],
+        "similarity": score,
+        "label": label,
+        "gemini": gemini_resp
+    }
+
+# 4. Web Validation Agent (LangChain + Gemini)
+from langchain.agents import initialize_agent, Tool
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+def web_validate_submission(subm_text: str) -> str:
+    """
+    Use LangChain Gemini agent to heuristically evaluate the submission content.
+    """
+    try:
+        # Define a simple tool wrapper (optional, can be extended later)
+        def dummy_tool(_):
+            return "Tool executed."
+
+        tool = Tool(
+            name="Web Validation Tool",
+            func=dummy_tool,
+            description="Evaluates a submission for ghostwriting, outdated info, and AI-generated content."
+        )
+
+        # Initialize Gemini LLM
+        llm = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0)
+
+        # Define agent
+        agent = initialize_agent(
+            tools=[tool],
+            llm=llm,
+            agent="zero-shot-react-description",
+            verbose=False
+        )
+
+        # Query
+        prompt = f"""
+Evaluate this student submission for:
+- signs of ghostwriting,
+- outdated information,
+- auto-generated content.
+
+Returns brief plain-text analysis.
+
+Submission:
+{subm_text}
+"""
+
+        return agent.run(prompt)
+
+    except Exception as e:
+        return f"Web validation failed: {str(e)}"
