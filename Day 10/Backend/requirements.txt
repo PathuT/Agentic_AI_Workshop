@@ -1,0 +1,25 @@
+# Core web framework
+fastapi
+uvicorn
+
+# LangChain & AI tooling
+langchain
+langchain-community
+langchain-google-genai
+google-generativeai
+openai
+
+# Embeddings & Vector DB
+sentence-transformers
+faiss-cpu
+
+# PDF & Image utilities
+newspaper3k
+pillow
+pytesseract
+opencv-python
+PyMuPDF
+
+# Environment & utilities
+python-dotenv
+pydantic

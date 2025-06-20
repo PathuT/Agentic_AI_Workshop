@@ -1,54 +1,93 @@
-import streamlit as st
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
-from app.utils.doc_utils import extract_text_from_pdf, extract_text_from_image
-from app.ai.pipeline import run_agents
+import io
+import sys
+import os
+from typing import Optional
 
-st.set_page_config(page_title="Agentic AI Validator", layout="centered")
-st.title("🧠 Agentic AI-Submission Validator")
+# Add your existing app directory to path
+sys.path.append(os.path.join(os.path.dirname(__file__), '../app'))
 
-# Upload inputs
-uploaded_submission = st.file_uploader("📄 Upload Submission (PDF/Image)", type=["pdf", "jpg", "jpeg", "png"])
-uploaded_reference = st.file_uploader("📎 Upload Trusted Certificate or Reference (PDF)", type=["pdf"])
-text_input = st.text_area("📝 Or Paste Submission Text Below", height=200)
+from utils.doc_utils import extract_text_from_pdf, extract_text_from_image
+from ai.pipeline import run_agents
 
-submit_text = ""
-img = None
+app = FastAPI(
+    title="Agentic AI Submission Validator API",
+    description="API for validating student submissions using multi-agent AI system",
+    version="1.0.0"
+)
 
-# Handle file input
-if uploaded_submission:
-    if uploaded_submission.type == "application/pdf":
-        submit_text = extract_text_from_pdf(uploaded_submission)
-    else:
-        img = Image.open(uploaded_submission)
-        submit_text = extract_text_from_image(img)
-elif text_input.strip():
-    submit_text = text_input.strip()
+# CORS configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Validate button
-if st.button("✅ Validate Submission"):
-    if not submit_text:
-        st.error("🚫 Please provide a submission via file or text.")
-    else:
-        with st.spinner("🔍 Running AI agents..."):
-            result = run_agents(submit_text, uploaded_reference, img)
+@app.post("/validate")
+async def validate_submission(
+    text_input: Optional[str] = Form(None),
+    submission_file: Optional[UploadFile] = File(None),
+    reference_file: Optional[UploadFile] = File(None),
+):
+    """
+    Validate a submission with optional file uploads and text input.
+    Replicates the Streamlit validation functionality.
+    """
+    try:
+        submit_text = ""
+        img = None
+        
+        # Process submission file
+        if submission_file:
+            if submission_file.content_type == "application/pdf":
+                submit_text = extract_text_from_pdf(submission_file.file)
+            else:
+                # Handle image file
+                img_data = await submission_file.read()
+                img = Image.open(io.BytesIO(img_data))
+                submit_text = extract_text_from_image(img)
+        elif text_input and text_input.strip():
+            submit_text = text_input.strip()
+            
+        if not submit_text:
+            raise HTTPException(
+                status_code=400, 
+                detail="Please provide a submission via file or text"
+            )
+            
+        # Process reference file if provided
+        ref_file_obj = None
+        if reference_file:
+            ref_file_obj = io.BytesIO(await reference_file.read())
+            ref_file_obj.name = reference_file.filename
+            
+        # Run the validation pipeline
+        result = run_agents(submit_text, ref_file_obj, img)
+        
+        # Prepare response (matching Streamlit output structure)
+        response = {
+            "status": "success",
+            "result": {
+                "plagiarism": result.get('plagiarism', False),
+                "parsed": result.get('parsed', {}),
+                "credential": result.get('credential', None),
+                "web_validation": result.get('web_validation', None)
+            }
+        }
+        
+        return response
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Validation failed: {str(e)}"
+        )
 
-        # Display results
-        if result['plagiarism']:
-            st.error("🚫 Duplicate submission detected. Please submit original work.")
-        else:
-            st.success("✅ Submission validated and stored for future comparison.")
-
-            st.subheader("🛠️ Submission Metadata")
-            st.json(result['parsed'])
-
-            st.subheader("🔍 Plagiarism Status")
-            st.write("No plagiarism detected.")
-
-            if result['credential']:
-                cred = result['credential']
-                st.subheader("📚 Credential Validation")
-                st.write("🔹 Matched Snippet:")
-                st.code(cred['matched'])
-                st.write(f"🔹 Score Label: `{cred['label']}`")
-                st.write("🔹 Output:")
-                st.code(cred['gemini'])
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "version": "1.0.0"}
