@@ -46,7 +46,6 @@ travel-assistant-ai/
 
 ```
 
-
 ---
 
 ## Environment Variables
@@ -59,10 +58,12 @@ GOOGLE_API_KEY=your_gemini_api_key_here
 WEATHER_API_KEY=your_weatherapi_key_here
 
 ```
+## Installation and running the APP
+```
 pip install -r requirements.txt
 
 ```
 
-```run
+```
 streamlit run app.py
 ```
