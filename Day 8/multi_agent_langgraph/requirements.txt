@@ -1,0 +1,8 @@
+langchain
+langgraph
+faiss-cpu
+streamlit
+python-dotenv
+duckduckgo-search
+langchain-google-genai
+langchain-community
